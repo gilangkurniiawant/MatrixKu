@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MatrixKu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .matrix-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .matrix-header,
+        .matrix div {
+            padding: 10px;
+            background-color: #e7e7e7;
+            border-radius: 5px;
+        }
+
+        .matrix-header {
+            background-color: #dcdcdc;
+            font-weight: normal;
+        }
+
+        .matrix div:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .output {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        #popupAlert {
+            display: none;
+            position: fixed;
+            width: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2e2f2e;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Matrix</h2>
+
+        <!-- Input for text -->
+        <label for="inputText">Masukkan Teks:</label>
+        <input type="text" id="inputText" placeholder="Masukkan kata..." oninput="processText()">
+
+        <button onclick="processText()">Enkripsi / Dekripsi</button>
+
+        <div class="output">
+            <p><strong>Hasil:</strong></p>
+            <div id="outputText"></div>
+
+        </div>
+        <button style="background-color: #171a17;" onclick="copyToClipboard()">Salin</button>
+        <hr>
+
+        <!-- Input for the KEY string -->
+        <label for="keyInput">Masukkan KEY (25 characters):</label>
+        <input type="text" id="keyInput" maxlength="25" placeholder="Masukkan 25 karakter KEY"
+            oninput="generateMatrix()">
+
+        <h3>Matriks 5x5 (A-Z)</h3>
+        <div class="matrix-container" id="matrixContainer">
+            <!-- The matrix will be dynamically generated here -->
+        </div>
+    </div>
+
+    <div id="popupAlert">Berhasil disalin</div>
+    <script>
+        // Initialize an empty matrix
+        let matrix = [];
+
+        // Function to generate the matrix dynamically based on the KEY input
+        function generateMatrix() {
+            const keyInput = document.getElementById('keyInput').value.toUpperCase().replace(/[^A-Z]/g, '');
+
+            if (keyInput.length === 25) {
+                matrix = [];
+                for (let i = 0; i < 5; i++) {
+                    matrix.push(keyInput.slice(i * 5, i * 5 + 5).split(''));
+                }
+
+                // Re-generate the displayed matrix
+                displayMatrix();
+            }
+        }
+
+        // Function to display the matrix in the HTML with coordinates above each letter
+        function displayMatrix() {
+            const matrixContainer = document.getElementById('matrixContainer');
+            matrixContainer.innerHTML = ''; // Clear existing matrix
+
+            // Add column headers with letters (A, B, C, D, E)
+            matrixContainer.innerHTML += '<div class="matrix-header"></div>'; // Empty top-left corner
+            const letters = ['A', 'B', 'C', 'D', 'E']; // Array of column headers
+            letters.forEach(letter => {
+                matrixContainer.innerHTML += `<div class="matrix-header">${letter}</div>`;
+            });
+
+            // Add rows with row numbers
+            matrix.forEach((row, rowIndex) => {
+                matrixContainer.innerHTML += `<div class="matrix-header">${rowIndex + 1}</div>`; // Row number
+
+                // Display coordinates above each letter
+                row.forEach((cell, colIndex) => {
+                    matrixContainer.innerHTML += `<div><div style="color: #ff0000; font-size:15px">(${rowIndex + 1},${letters[colIndex]})</div>${cell}</div>`;
+                });
+            });
+        }
+
+        // Function to get coordinates (row, column) of a letter
+        function getCoordinates(letter) {
+            letter = letter.toUpperCase();
+            const letters = ['A', 'B', 'C', 'D', 'E']; // Column identifiers
+
+            for (let row = 0; row < matrix.length; row++) {
+                for (let col = 0; col < matrix[row].length; col++) {
+                    if (matrix[row][col] === letter) {
+                        return `${row + 1}${letters[col]}`; // Return as row (1-based) and letter column
+                    }
+                }
+            }
+            return ''; // If letter not found
+        }
+
+        // Function to decode coordinates into letters
+        function decodeCoordinates(coordinate) {
+            // Ensure coordinate is properly formatted (e.g., "4E", "3C", ...)
+            const row = parseInt(coordinate[0]) - 1; // Row is first character of coordinate (numeric)
+            const colLetter = coordinate[1].toUpperCase(); // Column letter is second character
+            const col = ['A', 'B', 'C', 'D', 'E'].indexOf(colLetter); // Get column index from letter
+
+            if (row >= 0 && row < 5 && col >= 0 && col < 5) {
+                return matrix[row][col]; // Return the letter at the matrix position
+            }
+            return '?'; // Return '?' if invalid coordinate
+        }
+
+        // Function to process the input text for encryption or decryption
+        function processText() {
+            const input = document.getElementById('inputText').value;
+
+            // Remove spaces and any character that is not a letter or a digit
+            const cleanedInput = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+            let outputText = '';
+
+            // Check if input is a coordinate string like "4E3C5A1D2B"
+            if (cleanedInput.match(/(\d+[A-Ea-e])/)) {
+                // Decrypt if input is a coordinate string (e.g., "4E3C5A1D2B")
+                for (let i = 0; i < cleanedInput.length; i += 2) {
+                    const coordinate = cleanedInput.substr(i, 2); // Extract each coordinate pair
+                    outputText += decodeCoordinates(coordinate); // Decode each pair and append to output
+                }
+            } else {
+                // Encrypt if input is text
+                for (const letter of cleanedInput) {
+                    const coordinates = getCoordinates(letter);
+                    if (coordinates) {
+                        outputText += coordinates + ".";
+                    } else {
+                        outputText += '?'; // Character not found
+                    }
+                }
+            }
+
+            // Display the result
+            document.getElementById('outputText').innerText = outputText;
+        }
+
+        // Function to copy the result to clipboard
+        function copyToClipboard() {
+            const outputText = document.getElementById('outputText').innerText;
+
+            if (outputText) {
+                // Create a temporary textarea to copy text
+                const textarea = document.createElement('textarea');
+                textarea.value = outputText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                // Show the popup alert
+                showPopupAlert();
+            }
+        }
+
+        // Function to show the popup alert
+        function showPopupAlert() {
+            const popup = document.getElementById('popupAlert');
+            popup.style.display = 'block';
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 1000); // Hide after 1 second
+        }
+    </script>
+
+
+
+</body>
+
+</html>
