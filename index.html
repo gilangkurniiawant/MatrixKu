@@ -160,6 +160,22 @@
             text-align: center;
         }
 
+        #randomKeyBtn {
+            width: 80%;
+            /* Lebar 80% dari container */
+        }
+
+        #lockUnlockBtn {
+            width: 20%;
+            /* Lebar 20% dari container */
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
         #popupAlert {
             display: none;
             position: fixed;
@@ -185,7 +201,12 @@
         <label for="keyInput">Masukkan key (25 karakter unik):</label>
         <input type="text" id="keyInput" maxlength="25" placeholder="KEY" oninput="validateKey()">
 
-        <button onclick="generateRandomKey()" style="background-color: #853e3e;">Random Key</button>
+        <div class="button-container">
+            <button id="randomKeyBtn" onclick="generateRandomKey()" style="background-color: #3e854a;">Random
+                Key</button>
+            <button id="lockUnlockBtn" onclick="toggleLock()" style="background-color: #d13535">🔓</button>
+        </div>
+
         <hr>
         <h1>BIP39 Seed Phrase Generator</h1>
         <div class="controls">
@@ -321,7 +342,6 @@
                     const segment = combinedBits.slice(i * 11, (i + 1) * 11);
                     const wordIndex = parseInt(segment, 2);
                     const word = wordList[wordIndex];
-                    currentPhrase.push(word);
 
                     const wordBox = document.createElement('div');
                     wordBox.className = 'word-box';
@@ -414,7 +434,7 @@
             matrix.forEach((row, rowIndex) => {
                 matrixContainer.innerHTML += `<div class="matrix-header">${rowIndex + 1}</div>`;
                 row.forEach((cell, colIndex) => {
-                    matrixContainer.innerHTML += `<div><div style="color: #ff0000; font-size:15px">(${rowIndex + 1},${letters[colIndex]})</div>${cell}</div>`;
+                    matrixContainer.innerHTML += `<div><div style="color: #299d27; font-size:15px">(${rowIndex + 1},${letters[colIndex]})</div>${cell}</div>`;
                 });
             });
         }
@@ -497,6 +517,31 @@
                 popup.style.display = 'none';
             }, 1000);
         }
+
+        function toggleLock() {
+            var lockUnlockButton = document.getElementById("lockUnlockBtn");
+
+            if (lockUnlockButton.textContent === "🔒") {
+                // Jika tombol menunjukkan 'Lock', tampilkan konfirmasi untuk unlock
+                var confirmation = confirm("Apakah Anda serius ingin membuka kunci?");
+
+                if (confirmation) {
+                    // Jika ya, buka kunci (enable tombol Random Key)
+                    document.getElementById("randomKeyBtn").disabled = false;
+                    lockUnlockButton.textContent = "🔓"; // Ganti teks menjadi Unlock..
+                    lockUnlockButton.style.backgroundColor = "#f44336";  // Merah (warna Unlock)
+
+
+                }
+            } else {
+                // Jika tombol menunjukkan 'Unlock', kunci ulang tombol Random Key
+                document.getElementById("randomKeyBtn").disabled = true;
+                lockUnlockButton.textContent = "🔒"; // Ganti teks menjadi Lock
+                lockUnlockButton.style.backgroundColor = "#2c70a9";  // Hijau (warna Lock)
+            }
+        }
+
+        generateRandomKey()
     </script>
 
 </body>
