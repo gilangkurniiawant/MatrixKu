@@ -193,7 +193,8 @@
             <button onclick="generatePhrase(24)" style="background-color: #499599;">Generate 24 Words</button>
         </div>
         <div id="phraseContainer" class="phrase-container"></div>
-        <button style="display: none;" id="copyButton" onclick="copyPhrase()">Copy Phrase</button>
+        <button style="display: ok;background-color: #171a17;" id="copyButton" onclick="copyPhrase()">Salin
+            Phrase</button>
     </div>
 
     <div class="container">
@@ -212,7 +213,7 @@
         <label for="inputText">Masukkan Teks:</label>
         <input type="text" id="inputText" placeholder="Masukkan kata..." oninput="processText()">
 
-        <button onclick="processText()">Enkripsi / Dekripsi</button>
+        <button onclick="processText()" style="display: none;">Enkripsi / Dekripsi</button>
 
         <div class="output">
             <p><strong>Hasil:</strong></p>
