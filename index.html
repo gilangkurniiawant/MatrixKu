@@ -109,17 +109,17 @@
         <div class="output">
             <p><strong>Hasil:</strong></p>
             <div id="outputText"></div>
-
         </div>
         <button style="background-color: #171a17;" onclick="copyToClipboard()">Salin</button>
         <hr>
 
         <!-- Input for the KEY string -->
-        <label for="keyInput">Masukkan KEY (25 characters):</label>
-        <input type="text" id="keyInput" maxlength="25" placeholder="Masukkan 25 karakter KEY"
-            oninput="generateMatrix()">
+        <label for="keyInput">Masukkan key (25 karakter unik):</label>
+        <input type="text" id="keyInput" maxlength="25" placeholder="KEY" oninput="validateKey()">
 
-        <h3>Matriks 5x5 (A-Z)</h3>
+        <button onclick="generateRandomKey()" style="background-color: #853e3e;">Random Key</button>
+
+        <h3>Matriks 5x5 (A-Y)</h3>
         <div class="matrix-container" id="matrixContainer">
             <!-- The matrix will be dynamically generated here -->
         </div>
@@ -127,136 +127,111 @@
 
     <div id="popupAlert">Berhasil disalin</div>
     <script>
-        // Initialize an empty matrix
         let matrix = [];
 
-        // Function to generate the matrix dynamically based on the KEY input
-        function generateMatrix() {
-            const keyInput = document.getElementById('keyInput').value.toUpperCase().replace(/[^A-Z]/g, '');
+        // Validate the KEY input to allow only unique letters A-Y
+        function validateKey() {
+            const keyInput = document.getElementById('keyInput');
+            let key = keyInput.value.toUpperCase().replace(/[^A-Y]/g, '');
+            key = Array.from(new Set(key)).join(''); // Remove duplicates
+            if (key.length > 25) key = key.slice(0, 25); // Limit to 25 characters
+            keyInput.value = key;
 
+            if (key.length === 25) generateMatrix();
+        }
+
+        // Generate a random key with unique letters A-Y
+        function generateRandomKey() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXY';
+            const randomKey = Array.from(letters).sort(() => 0.5 - Math.random()).slice(0, 25).join('');
+            document.getElementById('keyInput').value = randomKey;
+            generateMatrix();
+        }
+
+        function generateMatrix() {
+            const keyInput = document.getElementById('keyInput').value.toUpperCase();
             if (keyInput.length === 25) {
                 matrix = [];
                 for (let i = 0; i < 5; i++) {
                     matrix.push(keyInput.slice(i * 5, i * 5 + 5).split(''));
                 }
-
-                // Re-generate the displayed matrix
                 displayMatrix();
             }
         }
 
-        // Function to display the matrix in the HTML with coordinates above each letter
         function displayMatrix() {
             const matrixContainer = document.getElementById('matrixContainer');
-            matrixContainer.innerHTML = ''; // Clear existing matrix
-
-            // Add column headers with letters (A, B, C, D, E)
-            matrixContainer.innerHTML += '<div class="matrix-header"></div>'; // Empty top-left corner
-            const letters = ['A', 'B', 'C', 'D', 'E']; // Array of column headers
-            letters.forEach(letter => {
-                matrixContainer.innerHTML += `<div class="matrix-header">${letter}</div>`;
-            });
-
-            // Add rows with row numbers
+            matrixContainer.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+            matrixContainer.innerHTML += '<div class="matrix-header"></div>';
+            letters.forEach(letter => matrixContainer.innerHTML += `<div class="matrix-header">${letter}</div>`);
             matrix.forEach((row, rowIndex) => {
-                matrixContainer.innerHTML += `<div class="matrix-header">${rowIndex + 1}</div>`; // Row number
-
-                // Display coordinates above each letter
+                matrixContainer.innerHTML += `<div class="matrix-header">${rowIndex + 1}</div>`;
                 row.forEach((cell, colIndex) => {
                     matrixContainer.innerHTML += `<div><div style="color: #ff0000; font-size:15px">(${rowIndex + 1},${letters[colIndex]})</div>${cell}</div>`;
                 });
             });
         }
 
-        // Function to get coordinates (row, column) of a letter
         function getCoordinates(letter) {
             letter = letter.toUpperCase();
-            const letters = ['A', 'B', 'C', 'D', 'E']; // Column identifiers
-
+            const letters = ['A', 'B', 'C', 'D', 'E'];
             for (let row = 0; row < matrix.length; row++) {
                 for (let col = 0; col < matrix[row].length; col++) {
-                    if (matrix[row][col] === letter) {
-                        return `${row + 1}${letters[col]}`; // Return as row (1-based) and letter column
-                    }
+                    if (matrix[row][col] === letter) return `${row + 1}${letters[col]}`;
                 }
             }
-            return ''; // If letter not found
+            return '';
         }
 
-        // Function to decode coordinates into letters
         function decodeCoordinates(coordinate) {
-            // Ensure coordinate is properly formatted (e.g., "4E", "3C", ...)
-            const row = parseInt(coordinate[0]) - 1; // Row is first character of coordinate (numeric)
-            const colLetter = coordinate[1].toUpperCase(); // Column letter is second character
-            const col = ['A', 'B', 'C', 'D', 'E'].indexOf(colLetter); // Get column index from letter
-
-            if (row >= 0 && row < 5 && col >= 0 && col < 5) {
-                return matrix[row][col]; // Return the letter at the matrix position
-            }
-            return '?'; // Return '?' if invalid coordinate
+            const row = parseInt(coordinate[0]) - 1;
+            const colLetter = coordinate[1].toUpperCase();
+            const col = ['A', 'B', 'C', 'D', 'E'].indexOf(colLetter);
+            if (row >= 0 && row < 5 && col >= 0 && col < 5) return matrix[row][col];
+            return '?';
         }
 
-        // Function to process the input text for encryption or decryption
         function processText() {
             const input = document.getElementById('inputText').value;
-
-            // Remove spaces and any character that is not a letter or a digit
             const cleanedInput = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-
             let outputText = '';
 
-            // Check if input is a coordinate string like "4E3C5A1D2B"
             if (cleanedInput.match(/(\d+[A-Ea-e])/)) {
-                // Decrypt if input is a coordinate string (e.g., "4E3C5A1D2B")
                 for (let i = 0; i < cleanedInput.length; i += 2) {
-                    const coordinate = cleanedInput.substr(i, 2); // Extract each coordinate pair
-                    outputText += decodeCoordinates(coordinate); // Decode each pair and append to output
+                    const coordinate = cleanedInput.substr(i, 2);
+                    outputText += decodeCoordinates(coordinate);
                 }
             } else {
-                // Encrypt if input is text
                 for (const letter of cleanedInput) {
                     const coordinates = getCoordinates(letter);
-                    if (coordinates) {
-                        outputText += coordinates + ".";
-                    } else {
-                        outputText += '?'; // Character not found
-                    }
+                    outputText += coordinates ? coordinates + "." : '?';
                 }
             }
-
-            // Display the result
             document.getElementById('outputText').innerText = outputText;
         }
 
-        // Function to copy the result to clipboard
         function copyToClipboard() {
             const outputText = document.getElementById('outputText').innerText;
-
             if (outputText) {
-                // Create a temporary textarea to copy text
                 const textarea = document.createElement('textarea');
                 textarea.value = outputText;
                 document.body.appendChild(textarea);
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-
-                // Show the popup alert
                 showPopupAlert();
             }
         }
 
-        // Function to show the popup alert
         function showPopupAlert() {
             const popup = document.getElementById('popupAlert');
             popup.style.display = 'block';
             setTimeout(() => {
                 popup.style.display = 'none';
-            }, 1000); // Hide after 1 second
+            }, 1000);
         }
     </script>
-
-
 
 </body>
 
