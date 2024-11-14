@@ -195,6 +195,12 @@
             gap: 10px;
         }
 
+        .textarea-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
         #popupAlert {
             display: none;
             position: fixed;
@@ -207,6 +213,11 @@
             padding: 10px 20px;
             border-radius: 5px;
             font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
         }
     </style>
 </head>
@@ -225,6 +236,16 @@
                 Key</button>
             <button id="lockUnlockBtn" onclick="toggleLock()" style="background-color: #d13535">🔓</button>
         </div>
+
+        <div class="container">
+            <textarea id="output" readonly></textarea>
+            <button style="background-color: #333934" onclick="copyKey()">Salin</button>
+
+        </div>
+
+
+
+
 
         <hr>
         <h1>BIP39 Seed Phrase Generator</h1>
@@ -410,6 +431,22 @@
         }
 
 
+        function copyKey() {
+            if (currentPhrase.length === 0) {
+                alert('Please generate a key first!');
+                return;
+            }
+
+            const phraseText = document.getElementById("output").value;
+            navigator.clipboard.writeText(phraseText).then(() => {
+                showPopupAlert();
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy phrase');
+            });
+        }
+
+
 
 
 
@@ -432,6 +469,26 @@
             const randomKey = Array.from(letters).sort(() => 0.5 - Math.random()).slice(0, 25).join('');
             document.getElementById('keyInput').value = randomKey;
             generateMatrix();
+
+            const keyInput = document.getElementById('keyInput').value;
+            const output = document.getElementById('output');
+
+            // Membatasi agar hanya 25 karakter
+            if (keyInput.length > 25) {
+                return;
+            }
+
+            // Membagi input menjadi potongan 4 karakter
+            let result = '';
+            let xx = 1;
+            for (let i = 0; i < keyInput.length; i += 5) {
+                result += xx + " " + keyInput.slice(i, i + 5) + '  ';
+                xx % 2 == 0 ? result += '\n' : '';
+                xx++;
+            }
+
+            // Menampilkan hasil pada textarea
+            output.value = result.trim();
         }
 
         function generateMatrix() {
@@ -593,6 +650,7 @@
                 lockUnlockButton.style.backgroundColor = "#2c70a9";  // Hijau (warna Lock)
             }
         }
+
 
         generateRandomKey()
     </script>
