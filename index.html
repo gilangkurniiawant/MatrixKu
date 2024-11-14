@@ -486,9 +486,32 @@
                 xx++;
             }
 
+            result += xx + ' ' + generateRandomString(5).toUpperCase() + '  ';
+
             // Menampilkan hasil pada textarea
             output.value = result.trim();
         }
+
+        function generateRandomString(length = 5) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+            let result = '';
+
+            // Pastikan jumlah karakter yang diminta tidak melebihi panjang kumpulan karakter
+            if (length > characters.length) {
+                throw new Error("Panjang string melebihi jumlah karakter unik yang tersedia.");
+            }
+
+            while (result.length < length) {
+                const randomChar = characters.charAt(Math.floor(Math.random() * characters.length));
+
+                // Tambahkan hanya jika karakter belum ada di hasil
+                if (!result.includes(randomChar)) {
+                    result += randomChar;
+                }
+            }
+            return result;
+        }
+
 
         function generateMatrix() {
             const keyInput = document.getElementById('keyInput').value.toUpperCase();
