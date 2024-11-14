@@ -228,7 +228,8 @@
 
         <!-- Input for the KEY string -->
         <label for="keyInput">Masukkan key (25 karakter unik):</label>
-        <input type="text" id="keyInput" maxlength="25" placeholder="KEY" oninput="validateKey()">
+        <input type="password" id="keyInput" maxlength="25" placeholder="KEY" onfocus="this.type='text'"
+            onblur="this.type='password'">
 
         <div class="button-container">
             <button id="randomKeyBtn" onclick="generateRandomKey()" style="background-color: #3e854a;">Random
@@ -237,7 +238,9 @@
         </div>
 
         <div class="container">
-            <textarea id="output" readonly></textarea>
+            <u onclick="hiddenKeyText()" style="cursor: pointer;" id="hiddenKeyText">Tampilkan</u>
+            <br><br>
+            <textarea id="output" style="display: none;" readonly></textarea>
             <button style="background-color: #333934" onclick="copyKey()">Salin</button>
 
         </div>
@@ -252,8 +255,10 @@
             <button onclick="generatePhrase(12)" style="background-color: #499599;">Generate 12 Words</button>
             <button onclick="generatePhrase(24)" style="background-color: #499599;">Generate 24 Words</button>
         </div>
-        <div id="phraseContainer" class="phrase-container"></div>
-        <button style="display: ok;background-color: #171a17;" id="copyButton" onclick="copyPhrase()">Salin
+        <u onclick="hiddenSeedPharse()" style="cursor: pointer;" id="hiddenSeedPharse">Tampilkan</u>
+        <br><br>
+        <div id="phraseContainer" style="display: none;" class="phrase-container"></div>
+        <button style="display: none;background-color: #171a17;" id="copyButton" onclick="copyPhrase()">Salin
             Phrase</button>
     </div>
 
@@ -670,6 +675,37 @@
                 document.getElementById("randomKeyBtn").disabled = true;
                 lockUnlockButton.textContent = "🔒"; // Ganti teks menjadi Lock
                 lockUnlockButton.style.backgroundColor = "#2c70a9";  // Hijau (warna Lock)
+            }
+        }
+
+
+        function hiddenSeedPharse() {
+            var lockUnlockButton = document.getElementById("hiddenSeedPharse");
+            var pharseList = document.getElementById("phraseContainer");
+
+            if (lockUnlockButton.textContent === "Tampilkan") {
+                lockUnlockButton.textContent = "Sembunyikan";
+                pharseList.style.display = "grid";
+
+
+            } else {
+                lockUnlockButton.textContent = "Tampilkan";
+                pharseList.style.display = "none";
+            }
+        }
+
+        function hiddenKeyText() {
+            var lockUnlockButton = document.getElementById("hiddenKeyText");
+            var pharseList = document.getElementById("output");
+
+            if (lockUnlockButton.textContent === "Tampilkan") {
+                lockUnlockButton.textContent = "Sembunyikan";
+                pharseList.style.display = "grid";
+
+
+            } else {
+                lockUnlockButton.textContent = "Tampilkan";
+                pharseList.style.display = "none";
             }
         }
 
