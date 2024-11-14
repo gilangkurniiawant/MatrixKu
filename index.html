@@ -392,15 +392,16 @@
                     wordBox.className = 'word-box';
                     wordBox.innerHTML = `
     <span class="word-number">${i + 1}.</span>
-    <span class="word">${await processText2(word)}</span>
+    <span class="word">${i + 1}| ${await processText2(word)}</span>
 `;
 
                     wordBox.onclick = function () {
                         // Mendapatkan teks dari elemen word
                         const text = this.querySelector('.word').textContent || this.querySelector('.word').innerText;
+                        const modifiedText = text.replace(/^.*?\|/, ''); // Hapus semua sebelum dan termasuk '|'
 
                         // Memasukkan teks ke dalam input dengan id="inputText"
-                        document.getElementById("inputText").value = text;
+                        document.getElementById("inputText").value = modifiedText;
                         processText(1);
                     };
 
