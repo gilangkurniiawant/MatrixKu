@@ -229,7 +229,7 @@
         <!-- Input for the KEY string -->
         <label for="keyInput">Masukkan key (25 karakter unik):</label>
         <input type="password" id="keyInput" maxlength="25" placeholder="KEY" onfocus="this.type='text'"
-            onblur="this.type='password'">
+            onblur="this.type='password'" oninput="validateKey()">
 
         <div class="button-container">
             <button id="randomKeyBtn" onclick="generateRandomKey()" style="background-color: #3e854a;">Random
@@ -308,7 +308,7 @@
             .then(text => {
                 // Split the text into an array of words
                 wordList = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
-                console.log(wordList); // Now you can use the wordList array in your code
+                //  console.log(wordList); // Now you can use the wordList array in your code
                 generatePhrase(12);
             })
             .catch(error => {
@@ -460,13 +460,39 @@
 
         // Validate the KEY input to allow only unique letters A-Y
         function validateKey() {
+
             const keyInput = document.getElementById('keyInput');
             let key = keyInput.value.toUpperCase().replace(/[^A-Y]/g, '');
             key = Array.from(new Set(key)).join(''); // Remove duplicates
             if (key.length > 25) key = key.slice(0, 25); // Limit to 25 characters
             keyInput.value = key;
-
+            // console.log(key)
             if (key.length === 25) generateMatrix();
+
+
+            const keyInput2 = document.getElementById('keyInput').value;
+            const output = document.getElementById('output');
+
+            // Membatasi agar hanya 25 karakter
+            if (keyInput2.length > 25) {
+                return;
+            }
+
+            // Membagi input menjadi potongan 4 karakter
+            let result = '';
+            let xx = 1;
+            for (let i = 0; i < keyInput2.length; i += 5) {
+                result += xx + " " + keyInput2.slice(i, i + 5) + '  ';
+                xx % 2 == 0 ? result += '\n' : '';
+                xx++;
+            }
+
+            result += xx + ' ' + generateRandomString(5).toUpperCase() + '  ';
+
+            // Menampilkan hasil pada textarea
+            output.value = result.trim();
+
+            generatePhrase(12);
         }
 
         // Generate a random key with unique letters A-Y
