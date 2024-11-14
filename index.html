@@ -400,6 +400,7 @@
                         const text = this.querySelector('.word').textContent || this.querySelector('.word').innerText;
                         const modifiedText = text.replace(/^.*?\|/, ''); // Hapus semua sebelum dan termasuk '|'
 
+                        copyToClipboardMatrix(modifiedText)
                         // Memasukkan teks ke dalam input dengan id="inputText"
                         document.getElementById("inputText").value = modifiedText;
                         processText(1);
@@ -631,6 +632,19 @@
 
         function copyToClipboard() {
             const outputText = document.getElementById('outputText').innerText;
+            if (outputText) {
+                const textarea = document.createElement('textarea');
+                textarea.value = outputText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showPopupAlert();
+            }
+        }
+
+
+        function copyToClipboardMatrix(outputText) {
             if (outputText) {
                 const textarea = document.createElement('textarea');
                 textarea.value = outputText;
