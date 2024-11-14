@@ -565,6 +565,8 @@
 
         function toggleLock() {
             var lockUnlockButton = document.getElementById("lockUnlockBtn");
+            var randomKeyBtn = document.getElementById("randomKeyBtn");
+
 
             if (lockUnlockButton.textContent === "🔒") {
                 // Jika tombol menunjukkan 'Lock', tampilkan konfirmasi untuk unlock
@@ -578,7 +580,13 @@
 
 
                 }
+                randomKeyBtn.style.display = "block";
+                lockUnlockButton.style.width = "20%";
             } else {
+
+                randomKeyBtn.style.display = "none";
+                lockUnlockButton.style.width = "100%";
+
                 // Jika tombol menunjukkan 'Unlock', kunci ulang tombol Random Key
                 document.getElementById("randomKeyBtn").disabled = true;
                 lockUnlockButton.textContent = "🔒"; // Ganti teks menjadi Lock
