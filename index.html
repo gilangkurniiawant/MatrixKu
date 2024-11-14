@@ -9,6 +9,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <title>MatrixKu</title>
     <style>
+        .autocomplete-suggestions {
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            position: absolute;
+            width: 200px;
+            background-color: white;
+            z-index: 1000;
+        }
+
+        .autocomplete-suggestions div {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .autocomplete-suggestions div:hover {
+            background-color: #ddd;
+        }
+
         .word-box {
             cursor: pointer;
             /* Mengubah kursor menjadi telunjuk saat di-hover */
@@ -233,6 +252,7 @@
         <!-- Input for text -->
         <label for="inputText">Masukkan Teks:</label>
         <input type="text" id="inputText" placeholder="Masukkan kata..." oninput="processText()">
+        <div id="autocomplete-list" class="autocomplete-suggestions"></div>
 
         <button onclick="processText()" style="display: none;">Enkripsi / Dekripsi</button>
 
@@ -458,7 +478,32 @@
             return '?';
         }
 
-        function processText() {
+        function processText(cL = 0) {
+
+            const inputText = document.getElementById('inputText').value;
+            const autocompleteList = document.getElementById('autocomplete-list');
+            autocompleteList.innerHTML = ''; // Clear previous suggestions
+
+            if (inputText.length > 0) {
+                const filteredWords = wordList.filter(word => word.startsWith(inputText));
+
+                filteredWords.forEach(word => {
+                    const suggestionDiv = document.createElement('div');
+                    suggestionDiv.textContent = word;
+                    suggestionDiv.onclick = function () {
+                        document.getElementById('inputText').value = word;
+                        autocompleteList.innerHTML = ''; // Clear suggestions after selection
+                        processText(1);
+                    };
+                    autocompleteList.appendChild(suggestionDiv);
+                });
+            }
+
+            cL == 1 ? autocompleteList.innerHTML = '' : '';
+
+
+
+
             const input = document.getElementById('inputText').value;
             const cleanedInput = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
             let outputText = '';
