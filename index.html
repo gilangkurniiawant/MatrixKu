@@ -400,7 +400,7 @@
                         const text = this.querySelector('.word').textContent || this.querySelector('.word').innerText;
                         const modifiedText = text.replace(/^.*?\|/, ''); // Hapus semua sebelum dan termasuk '|'
 
-                        copyToClipboardMatrix(modifiedText)
+                        copyToClipboardMatrix(text)
                         // Memasukkan teks ke dalam input dengan id="inputText"
                         document.getElementById("inputText").value = modifiedText;
                         processText(1);
