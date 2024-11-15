@@ -250,515 +250,518 @@
 
 
         <hr>
-        <h1>BIP39 Seed Phrase Generator</h1>
-        <div class="controls">
-            <button onclick="generatePhrase(12)" style="background-color: #499599;">Generate 12 Words</button>
-            <button onclick="generatePhrase(24)" style="background-color: #499599;">Generate 24 Words</button>
+        <div style="display: none;">
+            <div>
+                <h1>BIP39 Seed Phrase Generator</h1>
+                <div class="controls">
+                    <button onclick="generatePhrase(12)" style="background-color: #499599;">Generate 12 Words</button>
+                    <button onclick="generatePhrase(24)" style="background-color: #499599;">Generate 24 Words</button>
+                </div>
+                <u onclick="hiddenSeedPharse()" style="cursor: pointer;" id="hiddenSeedPharse">Tampilkan</u>
+                <br><br>
+                <div id="phraseContainer" style="display: none;" class="phrase-container"></div>
+                <button style="display: none;background-color: #171a17;" id="copyButton" onclick="copyPhrase()">Salin
+                    Phrase</button>
+            </div>
+
+            <div class="container">
+                <h2>Matrix Seed Pharse</h2>
+                <div id="pharsematrix" class="phrase-container"></div>
+
+
+            </div>
         </div>
-        <u onclick="hiddenSeedPharse()" style="cursor: pointer;" id="hiddenSeedPharse">Tampilkan</u>
-        <br><br>
-        <div id="phraseContainer" style="display: none;" class="phrase-container"></div>
-        <button style="display: none;background-color: #171a17;" id="copyButton" onclick="copyPhrase()">Salin
-            Phrase</button>
-    </div>
-
-    <div class="container">
-        <h2>Matrix Seed Pharse</h2>
-        <div id="pharsematrix" class="phrase-container"></div>
 
 
-    </div>
+        <div class="container">
+
+            <h2>Matrix Check</h2>
+
+            <!-- Input for text -->
+            <label for="inputText">Masukkan Teks:</label>
+            <input type="text" id="inputText" placeholder="Masukkan kata..." oninput="processText()">
+            <div id="autocomplete-list" class="autocomplete-suggestions"></div>
+
+            <button onclick="processText()" style="display: none;">Enkripsi / Dekripsi</button>
+
+            <div class="output">
+                <p><strong>Hasil:</strong></p>
+                <div id="outputText"></div>
+            </div>
+            <button style="background-color: #171a17;" onclick="copyToClipboard()">Salin</button>
+            <hr>
 
 
-    <div class="container">
-        <hr>
-        <h2>Matrix Check</h2>
-
-        <!-- Input for text -->
-        <label for="inputText">Masukkan Teks:</label>
-        <input type="text" id="inputText" placeholder="Masukkan kata..." oninput="processText()">
-        <div id="autocomplete-list" class="autocomplete-suggestions"></div>
-
-        <button onclick="processText()" style="display: none;">Enkripsi / Dekripsi</button>
-
-        <div class="output">
-            <p><strong>Hasil:</strong></p>
-            <div id="outputText"></div>
+            <h3>Matriks 5x5 (A-Y)</h3>
+            <div class="matrix-container" id="matrixContainer">
+                <!-- The matrix will be dynamically generated here -->
+            </div>
         </div>
-        <button style="background-color: #171a17;" onclick="copyToClipboard()">Salin</button>
-        <hr>
+
+        <div id="popupAlert">Berhasil disalin</div>
+        <script>
 
 
-        <h3>Matriks 5x5 (A-Y)</h3>
-        <div class="matrix-container" id="matrixContainer">
-            <!-- The matrix will be dynamically generated here -->
-        </div>
-    </div>
+            // BIP39 word list
+            let wordList = [];
 
-    <div id="popupAlert">Berhasil disalin</div>
-    <script>
-
-
-        // BIP39 word list
-        let wordList = [];
-
-        // Fetch the word list from the provided URL
-        fetch('https://raw.githubusercontent.com/bitcoin/bips/refs/heads/master/bip-0039/english.txt')
-            .then(response => response.text())
-            .then(text => {
-                // Split the text into an array of words
-                wordList = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
-                //  console.log(wordList); // Now you can use the wordList array in your code
-                generatePhrase(12);
-            })
-            .catch(error => {
-                console.error('Error fetching word list:', error);
-            });
+            // Fetch the word list from the provided URL
+            fetch('https://raw.githubusercontent.com/bitcoin/bips/refs/heads/master/bip-0039/english.txt')
+                .then(response => response.text())
+                .then(text => {
+                    // Split the text into an array of words
+                    wordList = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
+                    //  console.log(wordList); // Now you can use the wordList array in your code
+                    generatePhrase(12);
+                })
+                .catch(error => {
+                    console.error('Error fetching word list:', error);
+                });
 
 
-        let currentPhrase = [];
+            let currentPhrase = [];
 
-        async function generatePhrase(wordCount) {
-            // Generate entropy based on word count (128 bits for 12 words, 256 bits for 24 words)
-            const entropyBytes = wordCount === 12 ? 16 : 32;
-            const entropy = new Uint8Array(entropyBytes);
-            crypto.getRandomValues(entropy);
+            async function generatePhrase(wordCount) {
+                // Generate entropy based on word count (128 bits for 12 words, 256 bits for 24 words)
+                const entropyBytes = wordCount === 12 ? 16 : 32;
+                const entropy = new Uint8Array(entropyBytes);
+                crypto.getRandomValues(entropy);
 
-            // Convert entropy to binary string
-            let entropyBits = '';
-            entropy.forEach(byte => {
-                entropyBits += byte.toString(2).padStart(8, '0');
-            });
+                // Convert entropy to binary string
+                let entropyBits = '';
+                entropy.forEach(byte => {
+                    entropyBits += byte.toString(2).padStart(8, '0');
+                });
 
-            // Calculate checksum length (1 bit per 32 bits of entropy)
-            const checksumLength = entropyBytes / 4;
+                // Calculate checksum length (1 bit per 32 bits of entropy)
+                const checksumLength = entropyBytes / 4;
 
-            // Calculate SHA256 hash of entropy
-            const hash = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(entropy));
-            const hashBits = hash.toString(CryptoJS.enc.Hex)
-                .split('')
-                .map(char => parseInt(char, 16).toString(2).padStart(4, '0'))
-                .join('')
-                .slice(0, checksumLength);
+                // Calculate SHA256 hash of entropy
+                const hash = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(entropy));
+                const hashBits = hash.toString(CryptoJS.enc.Hex)
+                    .split('')
+                    .map(char => parseInt(char, 16).toString(2).padStart(4, '0'))
+                    .join('')
+                    .slice(0, checksumLength);
 
-            // Combine entropy bits with checksum bits
-            const combinedBits = entropyBits + hashBits;
+                // Combine entropy bits with checksum bits
+                const combinedBits = entropyBits + hashBits;
 
-            // Split bits into 11-bit segments and convert to words
-            currentPhrase = [];
-
-
-            const container = document.getElementById('phraseContainer');
-            container.innerHTML = '';
-
-            for (let i = 0; i < wordCount; i++) {
-                const segment = combinedBits.slice(i * 11, (i + 1) * 11);
-                const wordIndex = parseInt(segment, 2);
-                const word = wordList[wordIndex];
-                currentPhrase.push(word);
-
-                const wordBox = document.createElement('div');
-                wordBox.className = 'word-box';
-                wordBox.innerHTML = `
-    <span class="word-number">${i + 1}.</span>
-    <span class="word">${word}</span>
-`;
-
-                wordBox.onclick = function () {
-
-                    // Mendapatkan teks dari elemen word
-                    const text = this.querySelector('.word').textContent || this.querySelector('.word').innerText;
-
-                    // Memasukkan teks ke dalam input dengan id="inputText"
-                    document.getElementById("inputText").value = text;
-                    processText(1);
-                };
+                // Split bits into 11-bit segments and convert to words
+                currentPhrase = [];
 
 
-                container.appendChild(wordBox);
-
-
-
-
-                const container2 = document.getElementById('pharsematrix');
-                container2.innerHTML = '';
+                const container = document.getElementById('phraseContainer');
+                container.innerHTML = '';
 
                 for (let i = 0; i < wordCount; i++) {
                     const segment = combinedBits.slice(i * 11, (i + 1) * 11);
                     const wordIndex = parseInt(segment, 2);
                     const word = wordList[wordIndex];
+                    currentPhrase.push(word);
 
                     const wordBox = document.createElement('div');
                     wordBox.className = 'word-box';
                     wordBox.innerHTML = `
     <span class="word-number">${i + 1}.</span>
-    <span class="word" style="font-size:12px">${i + 1}| ${await processText2(word)}</span>
+    <span class="word">${word}</span>
 `;
 
                     wordBox.onclick = function () {
+
                         // Mendapatkan teks dari elemen word
                         const text = this.querySelector('.word').textContent || this.querySelector('.word').innerText;
-                        const modifiedText = text.replace(/^.*?\|/, ''); // Hapus semua sebelum dan termasuk '|'
 
-                        copyToClipboardMatrix(text)
                         // Memasukkan teks ke dalam input dengan id="inputText"
-                        document.getElementById("inputText").value = modifiedText;
+                        document.getElementById("inputText").value = text;
                         processText(1);
                     };
 
 
-                    container2.appendChild(wordBox);
+                    container.appendChild(wordBox);
+
+
+
+
+                    const container2 = document.getElementById('pharsematrix');
+                    container2.innerHTML = '';
+
+                    for (let i = 0; i < wordCount; i++) {
+                        const segment = combinedBits.slice(i * 11, (i + 1) * 11);
+                        const wordIndex = parseInt(segment, 2);
+                        const word = wordList[wordIndex];
+
+                        const wordBox = document.createElement('div');
+                        wordBox.className = 'word-box';
+                        wordBox.innerHTML = `
+    <span class="word-number">${i + 1}.</span>
+    <span class="word" style="font-size:12px">${i + 1}| ${await processText2(word)}</span>
+`;
+
+                        wordBox.onclick = function () {
+                            // Mendapatkan teks dari elemen word
+                            const text = this.querySelector('.word').textContent || this.querySelector('.word').innerText;
+                            const modifiedText = text.replace(/^.*?\|/, ''); // Hapus semua sebelum dan termasuk '|'
+
+                            copyToClipboardMatrix(text)
+                            // Memasukkan teks ke dalam input dengan id="inputText"
+                            document.getElementById("inputText").value = modifiedText;
+                            processText(1);
+                        };
+
+
+                        container2.appendChild(wordBox);
+                    }
                 }
             }
-        }
 
-        function insertText(element) {
-            // Mendapatkan teks dari elemen yang diklik
-            const text = element.textContent || element.innerText;
+            function insertText(element) {
+                // Mendapatkan teks dari elemen yang diklik
+                const text = element.textContent || element.innerText;
 
-            // Memasukkan teks ke dalam input dengan id="inputText"
-            document.getElementById("inputText").value = text;
-        }
-
-
-        function copyPhrase() {
-            if (currentPhrase.length === 0) {
-                alert('Please generate a phrase first!');
-                return;
+                // Memasukkan teks ke dalam input dengan id="inputText"
+                document.getElementById("inputText").value = text;
             }
 
-            const phraseText = currentPhrase.join(' ');
-            navigator.clipboard.writeText(phraseText).then(() => {
-                showPopupAlert();
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                alert('Failed to copy phrase');
-            });
-        }
 
-
-        function copyKey() {
-            if (currentPhrase.length === 0) {
-                alert('Please generate a key first!');
-                return;
-            }
-
-            const phraseText = document.getElementById("output").value;
-            navigator.clipboard.writeText(phraseText).then(() => {
-                showPopupAlert();
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                alert('Failed to copy phrase');
-            });
-        }
-
-
-
-
-
-        let matrix = [];
-
-        // Validate the KEY input to allow only unique letters A-Y
-        function validateKey() {
-
-            const keyInput = document.getElementById('keyInput');
-            let key = keyInput.value.toUpperCase().replace(/[^A-Y]/g, '');
-            key = Array.from(new Set(key)).join(''); // Remove duplicates
-            if (key.length > 25) key = key.slice(0, 25); // Limit to 25 characters
-            keyInput.value = key;
-            // console.log(key)
-            if (key.length === 25) generateMatrix();
-
-
-            const keyInput2 = document.getElementById('keyInput').value;
-            const output = document.getElementById('output');
-
-            // Membatasi agar hanya 25 karakter
-            if (keyInput2.length > 25) {
-                return;
-            }
-
-            // Membagi input menjadi potongan 4 karakter
-            let result = '';
-            let xx = 1;
-            for (let i = 0; i < keyInput2.length; i += 5) {
-                result += xx + " " + keyInput2.slice(i, i + 5) + '  ';
-                xx % 2 == 0 ? result += '\n' : '';
-                xx++;
-            }
-
-            result += xx + ' ' + generateRandomString(5).toUpperCase() + '  ';
-
-            // Menampilkan hasil pada textarea
-            output.value = result.trim();
-
-            generatePhrase(12);
-        }
-
-        // Generate a random key with unique letters A-Y
-        function generateRandomKey() {
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXY';
-            const randomKey = Array.from(letters).sort(() => 0.5 - Math.random()).slice(0, 25).join('');
-            document.getElementById('keyInput').value = randomKey;
-            generateMatrix();
-
-            const keyInput = document.getElementById('keyInput').value;
-            const output = document.getElementById('output');
-
-            // Membatasi agar hanya 25 karakter
-            if (keyInput.length > 25) {
-                return;
-            }
-
-            // Membagi input menjadi potongan 4 karakter
-            let result = '';
-            let xx = 1;
-            for (let i = 0; i < keyInput.length; i += 5) {
-                result += xx + " " + keyInput.slice(i, i + 5) + '  ';
-                xx % 2 == 0 ? result += '\n' : '';
-                xx++;
-            }
-
-            result += xx + ' ' + generateRandomString(5).toUpperCase() + '  ';
-
-            // Menampilkan hasil pada textarea
-            output.value = result.trim();
-
-            generatePhrase(12);
-        }
-
-        function generateRandomString(length = 5) {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-            let result = '';
-
-            // Pastikan jumlah karakter yang diminta tidak melebihi panjang kumpulan karakter
-            if (length > characters.length) {
-                throw new Error("Panjang string melebihi jumlah karakter unik yang tersedia.");
-            }
-
-            while (result.length < length) {
-                const randomChar = characters.charAt(Math.floor(Math.random() * characters.length));
-
-                // Tambahkan hanya jika karakter belum ada di hasil
-                if (!result.includes(randomChar)) {
-                    result += randomChar;
+            function copyPhrase() {
+                if (currentPhrase.length === 0) {
+                    alert('Please generate a phrase first!');
+                    return;
                 }
-            }
-            return result;
-        }
 
-
-        function generateMatrix() {
-            const keyInput = document.getElementById('keyInput').value.toUpperCase();
-            if (keyInput.length === 25) {
-                matrix = [];
-                for (let i = 0; i < 5; i++) {
-                    matrix.push(keyInput.slice(i * 5, i * 5 + 5).split(''));
-                }
-                displayMatrix();
-            }
-        }
-
-        function displayMatrix() {
-            const matrixContainer = document.getElementById('matrixContainer');
-            matrixContainer.innerHTML = '';
-            const letters = ['A', 'B', 'C', 'D', 'E'];
-            matrixContainer.innerHTML += '<div class="matrix-header"></div>';
-            letters.forEach(letter => matrixContainer.innerHTML += `<div class="matrix-header">${letter}</div>`);
-            matrix.forEach((row, rowIndex) => {
-                matrixContainer.innerHTML += `<div class="matrix-header">${rowIndex + 1}</div>`;
-                row.forEach((cell, colIndex) => {
-                    matrixContainer.innerHTML += `<div><div style="color: #299d27; font-size:15px">(${rowIndex + 1},${letters[colIndex]})</div>${cell}</div>`;
-                });
-            });
-        }
-
-        function getCoordinates(letter) {
-            letter = letter.toUpperCase();
-            const letters = ['A', 'B', 'C', 'D', 'E'];
-            for (let row = 0; row < matrix.length; row++) {
-                for (let col = 0; col < matrix[row].length; col++) {
-                    if (matrix[row][col] === letter) return `${row + 1}${letters[col]}`;
-                }
-            }
-            return '';
-        }
-
-        function decodeCoordinates(coordinate) {
-            const row = parseInt(coordinate[0]) - 1;
-            const colLetter = coordinate[1].toUpperCase();
-            const col = ['A', 'B', 'C', 'D', 'E'].indexOf(colLetter);
-            if (row >= 0 && row < 5 && col >= 0 && col < 5) return matrix[row][col];
-            return '?';
-        }
-
-        function processText(cL = 0) {
-
-            const inputText = document.getElementById('inputText').value;
-            const autocompleteList = document.getElementById('autocomplete-list');
-            autocompleteList.innerHTML = ''; // Clear previous suggestions
-
-            if (inputText.length > 0) {
-                const filteredWords = wordList.filter(word => word.startsWith(inputText));
-
-                filteredWords.forEach(word => {
-                    const suggestionDiv = document.createElement('div');
-                    suggestionDiv.textContent = word;
-                    suggestionDiv.onclick = function () {
-                        document.getElementById('inputText').value = word;
-                        autocompleteList.innerHTML = ''; // Clear suggestions after selection
-                        processText(1);
-                    };
-                    autocompleteList.appendChild(suggestionDiv);
+                const phraseText = currentPhrase.join(' ');
+                navigator.clipboard.writeText(phraseText).then(() => {
+                    showPopupAlert();
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy phrase');
                 });
             }
 
-            cL == 1 ? autocompleteList.innerHTML = '' : '';
 
-
-
-
-            const input = document.getElementById('inputText').value;
-            const cleanedInput = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-            let outputText = '';
-
-            if (cleanedInput.match(/(\d+[A-Ea-e])/)) {
-                for (let i = 0; i < cleanedInput.length; i += 2) {
-                    const coordinate = cleanedInput.substr(i, 2);
-                    outputText += decodeCoordinates(coordinate);
-                }
-            } else {
-                for (const letter of cleanedInput) {
-                    const coordinates = getCoordinates(letter);
-                    outputText += coordinates ? coordinates + "." : '?';
-                }
-            }
-            document.getElementById('outputText').innerText = outputText;
-        }
-
-
-        function processText2(kata) {
-            const input = kata;
-            const cleanedInput = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-            let outputText = '';
-
-            if (cleanedInput.match(/(\d+[A-Ea-e])/)) {
-                for (let i = 0; i < cleanedInput.length; i += 2) {
-                    const coordinate = cleanedInput.substr(i, 2);
-                    outputText += decodeCoordinates(coordinate);
-                }
-            } else {
-                for (const letter of cleanedInput) {
-                    const coordinates = getCoordinates(letter);
-                    outputText += coordinates ? coordinates + "." : '?';
-                }
-            }
-            return outputText;
-        }
-
-        function copyToClipboard() {
-            const outputText = document.getElementById('outputText').innerText;
-            if (outputText) {
-                const textarea = document.createElement('textarea');
-                textarea.value = outputText;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showPopupAlert();
-            }
-        }
-
-
-        function copyToClipboardMatrix(outputText) {
-            if (outputText) {
-                const textarea = document.createElement('textarea');
-                textarea.value = outputText;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showPopupAlert();
-            }
-        }
-
-        function showPopupAlert() {
-            const popup = document.getElementById('popupAlert');
-            popup.style.display = 'block';
-            setTimeout(() => {
-                popup.style.display = 'none';
-            }, 1000);
-        }
-
-        function toggleLock() {
-            var lockUnlockButton = document.getElementById("lockUnlockBtn");
-            var randomKeyBtn = document.getElementById("randomKeyBtn");
-
-
-            if (lockUnlockButton.textContent === "🔒") {
-                // Jika tombol menunjukkan 'Lock', tampilkan konfirmasi untuk unlock
-                var confirmation = confirm("Apakah Anda serius ingin membuka kunci?");
-
-                if (confirmation) {
-                    // Jika ya, buka kunci (enable tombol Random Key)
-                    document.getElementById("randomKeyBtn").disabled = false;
-                    lockUnlockButton.textContent = "🔓"; // Ganti teks menjadi Unlock..
-                    lockUnlockButton.style.backgroundColor = "#f44336";  // Merah (warna Unlock)
-
-                    randomKeyBtn.style.display = "block";
-                    lockUnlockButton.style.width = "20%";
+            function copyKey() {
+                if (currentPhrase.length === 0) {
+                    alert('Please generate a key first!');
+                    return;
                 }
 
-            } else {
-
-                randomKeyBtn.style.display = "none";
-                lockUnlockButton.style.width = "100%";
-
-                // Jika tombol menunjukkan 'Unlock', kunci ulang tombol Random Key
-                document.getElementById("randomKeyBtn").disabled = true;
-                lockUnlockButton.textContent = "🔒"; // Ganti teks menjadi Lock
-                lockUnlockButton.style.backgroundColor = "#2c70a9";  // Hijau (warna Lock)
+                const phraseText = document.getElementById("output").value;
+                navigator.clipboard.writeText(phraseText).then(() => {
+                    showPopupAlert();
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy phrase');
+                });
             }
-        }
 
 
-        function hiddenSeedPharse() {
-            var lockUnlockButton = document.getElementById("hiddenSeedPharse");
-            var pharseList = document.getElementById("phraseContainer");
-
-            if (lockUnlockButton.textContent === "Tampilkan") {
-                lockUnlockButton.textContent = "Sembunyikan";
-                pharseList.style.display = "grid";
 
 
-            } else {
-                lockUnlockButton.textContent = "Tampilkan";
-                pharseList.style.display = "none";
+
+            let matrix = [];
+
+            // Validate the KEY input to allow only unique letters A-Y
+            function validateKey() {
+
+                const keyInput = document.getElementById('keyInput');
+                let key = keyInput.value.toUpperCase().replace(/[^A-Y]/g, '');
+                key = Array.from(new Set(key)).join(''); // Remove duplicates
+                if (key.length > 25) key = key.slice(0, 25); // Limit to 25 characters
+                keyInput.value = key;
+                // console.log(key)
+                if (key.length === 25) generateMatrix();
+
+
+                const keyInput2 = document.getElementById('keyInput').value;
+                const output = document.getElementById('output');
+
+                // Membatasi agar hanya 25 karakter
+                if (keyInput2.length > 25) {
+                    return;
+                }
+
+                // Membagi input menjadi potongan 4 karakter
+                let result = '';
+                let xx = 1;
+                for (let i = 0; i < keyInput2.length; i += 5) {
+                    result += xx + " " + keyInput2.slice(i, i + 5) + '  ';
+                    xx % 2 == 0 ? result += '\n' : '';
+                    xx++;
+                }
+
+                result += xx + ' ' + generateRandomString(5).toUpperCase() + '  ';
+
+                // Menampilkan hasil pada textarea
+                output.value = result.trim();
+
+                generatePhrase(12);
             }
-        }
 
-        function hiddenKeyText() {
-            var lockUnlockButton = document.getElementById("hiddenKeyText");
-            var pharseList = document.getElementById("output");
+            // Generate a random key with unique letters A-Y
+            function generateRandomKey() {
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXY';
+                const randomKey = Array.from(letters).sort(() => 0.5 - Math.random()).slice(0, 25).join('');
+                document.getElementById('keyInput').value = randomKey;
+                generateMatrix();
 
-            if (lockUnlockButton.textContent === "Tampilkan") {
-                lockUnlockButton.textContent = "Sembunyikan";
-                pharseList.style.display = "grid";
+                const keyInput = document.getElementById('keyInput').value;
+                const output = document.getElementById('output');
 
+                // Membatasi agar hanya 25 karakter
+                if (keyInput.length > 25) {
+                    return;
+                }
 
-            } else {
-                lockUnlockButton.textContent = "Tampilkan";
-                pharseList.style.display = "none";
+                // Membagi input menjadi potongan 4 karakter
+                let result = '';
+                let xx = 1;
+                for (let i = 0; i < keyInput.length; i += 5) {
+                    result += xx + " " + keyInput.slice(i, i + 5) + '  ';
+                    xx % 2 == 0 ? result += '\n' : '';
+                    xx++;
+                }
+
+                result += xx + ' ' + generateRandomString(5).toUpperCase() + '  ';
+
+                // Menampilkan hasil pada textarea
+                output.value = result.trim();
+
+                generatePhrase(12);
             }
-        }
 
-        document.addEventListener('dblclick', function (e) {
-            e.preventDefault();
-        }, { passive: false });
+            function generateRandomString(length = 5) {
+                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+                let result = '';
+
+                // Pastikan jumlah karakter yang diminta tidak melebihi panjang kumpulan karakter
+                if (length > characters.length) {
+                    throw new Error("Panjang string melebihi jumlah karakter unik yang tersedia.");
+                }
+
+                while (result.length < length) {
+                    const randomChar = characters.charAt(Math.floor(Math.random() * characters.length));
+
+                    // Tambahkan hanya jika karakter belum ada di hasil
+                    if (!result.includes(randomChar)) {
+                        result += randomChar;
+                    }
+                }
+                return result;
+            }
 
 
-        generateRandomKey()
-    </script>
+            function generateMatrix() {
+                const keyInput = document.getElementById('keyInput').value.toUpperCase();
+                if (keyInput.length === 25) {
+                    matrix = [];
+                    for (let i = 0; i < 5; i++) {
+                        matrix.push(keyInput.slice(i * 5, i * 5 + 5).split(''));
+                    }
+                    displayMatrix();
+                }
+            }
+
+            function displayMatrix() {
+                const matrixContainer = document.getElementById('matrixContainer');
+                matrixContainer.innerHTML = '';
+                const letters = ['A', 'B', 'C', 'D', 'E'];
+                matrixContainer.innerHTML += '<div class="matrix-header"></div>';
+                letters.forEach(letter => matrixContainer.innerHTML += `<div class="matrix-header">${letter}</div>`);
+                matrix.forEach((row, rowIndex) => {
+                    matrixContainer.innerHTML += `<div class="matrix-header">${rowIndex + 1}</div>`;
+                    row.forEach((cell, colIndex) => {
+                        matrixContainer.innerHTML += `<div><div style="color: #299d27; font-size:15px">(${rowIndex + 1},${letters[colIndex]})</div>${cell}</div>`;
+                    });
+                });
+            }
+
+            function getCoordinates(letter) {
+                letter = letter.toUpperCase();
+                const letters = ['A', 'B', 'C', 'D', 'E'];
+                for (let row = 0; row < matrix.length; row++) {
+                    for (let col = 0; col < matrix[row].length; col++) {
+                        if (matrix[row][col] === letter) return `${row + 1}${letters[col]}`;
+                    }
+                }
+                return '';
+            }
+
+            function decodeCoordinates(coordinate) {
+                const row = parseInt(coordinate[0]) - 1;
+                const colLetter = coordinate[1].toUpperCase();
+                const col = ['A', 'B', 'C', 'D', 'E'].indexOf(colLetter);
+                if (row >= 0 && row < 5 && col >= 0 && col < 5) return matrix[row][col];
+                return '?';
+            }
+
+            function processText(cL = 0) {
+
+                const inputText = document.getElementById('inputText').value;
+                const autocompleteList = document.getElementById('autocomplete-list');
+                autocompleteList.innerHTML = ''; // Clear previous suggestions
+
+                if (inputText.length > 0) {
+                    const filteredWords = wordList.filter(word => word.startsWith(inputText));
+
+                    filteredWords.forEach(word => {
+                        const suggestionDiv = document.createElement('div');
+                        suggestionDiv.textContent = word;
+                        suggestionDiv.onclick = function () {
+                            document.getElementById('inputText').value = word;
+                            autocompleteList.innerHTML = ''; // Clear suggestions after selection
+                            processText(1);
+                        };
+                        autocompleteList.appendChild(suggestionDiv);
+                    });
+                }
+
+                cL == 1 ? autocompleteList.innerHTML = '' : '';
+
+
+
+
+                const input = document.getElementById('inputText').value;
+                const cleanedInput = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                let outputText = '';
+
+                if (cleanedInput.match(/(\d+[A-Ea-e])/)) {
+                    for (let i = 0; i < cleanedInput.length; i += 2) {
+                        const coordinate = cleanedInput.substr(i, 2);
+                        outputText += decodeCoordinates(coordinate);
+                    }
+                } else {
+                    for (const letter of cleanedInput) {
+                        const coordinates = getCoordinates(letter);
+                        outputText += coordinates ? coordinates + "." : '?';
+                    }
+                }
+                document.getElementById('outputText').innerText = outputText;
+            }
+
+
+            function processText2(kata) {
+                const input = kata;
+                const cleanedInput = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                let outputText = '';
+
+                if (cleanedInput.match(/(\d+[A-Ea-e])/)) {
+                    for (let i = 0; i < cleanedInput.length; i += 2) {
+                        const coordinate = cleanedInput.substr(i, 2);
+                        outputText += decodeCoordinates(coordinate);
+                    }
+                } else {
+                    for (const letter of cleanedInput) {
+                        const coordinates = getCoordinates(letter);
+                        outputText += coordinates ? coordinates + "." : '?';
+                    }
+                }
+                return outputText;
+            }
+
+            function copyToClipboard() {
+                const outputText = document.getElementById('outputText').innerText;
+                if (outputText) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = outputText;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showPopupAlert();
+                }
+            }
+
+
+            function copyToClipboardMatrix(outputText) {
+                if (outputText) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = outputText;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showPopupAlert();
+                }
+            }
+
+            function showPopupAlert() {
+                const popup = document.getElementById('popupAlert');
+                popup.style.display = 'block';
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 1000);
+            }
+
+            function toggleLock() {
+                var lockUnlockButton = document.getElementById("lockUnlockBtn");
+                var randomKeyBtn = document.getElementById("randomKeyBtn");
+
+
+                if (lockUnlockButton.textContent === "🔒") {
+                    // Jika tombol menunjukkan 'Lock', tampilkan konfirmasi untuk unlock
+                    var confirmation = confirm("Apakah Anda serius ingin membuka kunci?");
+
+                    if (confirmation) {
+                        // Jika ya, buka kunci (enable tombol Random Key)
+                        document.getElementById("randomKeyBtn").disabled = false;
+                        lockUnlockButton.textContent = "🔓"; // Ganti teks menjadi Unlock..
+                        lockUnlockButton.style.backgroundColor = "#f44336";  // Merah (warna Unlock)
+
+                        randomKeyBtn.style.display = "block";
+                        lockUnlockButton.style.width = "20%";
+                    }
+
+                } else {
+
+                    randomKeyBtn.style.display = "none";
+                    lockUnlockButton.style.width = "100%";
+
+                    // Jika tombol menunjukkan 'Unlock', kunci ulang tombol Random Key
+                    document.getElementById("randomKeyBtn").disabled = true;
+                    lockUnlockButton.textContent = "🔒"; // Ganti teks menjadi Lock
+                    lockUnlockButton.style.backgroundColor = "#2c70a9";  // Hijau (warna Lock)
+                }
+            }
+
+
+            function hiddenSeedPharse() {
+                var lockUnlockButton = document.getElementById("hiddenSeedPharse");
+                var pharseList = document.getElementById("phraseContainer");
+
+                if (lockUnlockButton.textContent === "Tampilkan") {
+                    lockUnlockButton.textContent = "Sembunyikan";
+                    pharseList.style.display = "grid";
+
+
+                } else {
+                    lockUnlockButton.textContent = "Tampilkan";
+                    pharseList.style.display = "none";
+                }
+            }
+
+            function hiddenKeyText() {
+                var lockUnlockButton = document.getElementById("hiddenKeyText");
+                var pharseList = document.getElementById("output");
+
+                if (lockUnlockButton.textContent === "Tampilkan") {
+                    lockUnlockButton.textContent = "Sembunyikan";
+                    pharseList.style.display = "grid";
+
+
+                } else {
+                    lockUnlockButton.textContent = "Tampilkan";
+                    pharseList.style.display = "none";
+                }
+            }
+
+            document.addEventListener('dblclick', function (e) {
+                e.preventDefault();
+            }, { passive: false });
+
+
+            generateRandomKey()
+        </script>
 
 </body>
 
